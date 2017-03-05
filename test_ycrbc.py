@@ -320,29 +320,12 @@ def pipeline(img, classifier, X_scaler, heatmap_threshold=2, draw_images=False):
     box_list = []
     
     for i in range(len(ystart)):
-        if (i%2 == 0) and draw_images:
-            plt.figure(figsize=(20,20))
-        plt.subplot(1,2,i%2+1)
         # Let's create a searching method that best scans the desired region
         boxes, out_img = find_cars(img, ystart[i], ystop[i], scale[i], 
                                    classifier, X_scaler, orient, pix_per_cell, 
                                    cell_per_block, cells_per_step[i])
 
         box_list.extend(boxes)
-        if draw_images:
-            plt.imshow(out_img)
-            title = "scale=" + str(scale[i]) + ", cells per step=" + str(cells_per_step[i])
-            plt.title(title, fontsize=20)
-            if (i%2 == 1):
-                plt.show()
-
-    if draw_images:
-        boxes_image = np.copy(img)
-        for box in box_list:
-            cv2.rectangle(boxes_image,box[0], box[1], (0,0,255),6) 
-        plt.imshow(boxes_image)
-        plt.title('All scales combined')
-        plt.show()
 
     heat = np.zeros_like(img[:,:,0]).astype(np.float)
 
@@ -358,18 +341,6 @@ def pipeline(img, classifier, X_scaler, heatmap_threshold=2, draw_images=False):
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
     draw_orig_img = draw_labeled_bboxes(np.copy(img), labels)
-
-
-    if draw_images:
-        fig = plt.figure(figsize=(20,20))
-        plt.subplot(121)
-        plt.imshow(draw_orig_img)
-        plt.title('Car Positions')
-        plt.subplot(122)
-        plt.imshow(heatmap, cmap='hot')
-        plt.title('Heat Map')
-        fig.tight_layout()
-        plt.show()
     
     return heat
 
@@ -428,7 +399,7 @@ heat_list = []
 heat_sum = np.zeros((720, 1280)).astype(np.float64)
 
 # clip = VideoFileClip('test_video.mp4').subclip(0,1)
-clip = VideoFileClip('project_video.mp4').subclip(30,31)
+clip = VideoFileClip('project_video.mp4')
 processed_vid = clip.fl_image(car_finding)
 processed_vid.write_videofile('processed_video.mp4', audio=False)
 
