@@ -234,3 +234,4 @@ Testing my algorithm on the project video revealed two flaws:
 * Cars appearing on the side are detected rather late. I might be able to fix that by augmenting my dataset and e.g. shifting the image so it learns to classify cars not only when they're fully in the picture, but also when only half the car is in the image.
 * Even though my algorithm barely reacts to shadows, there was a moment when it did so and extended the bounding box for the black car too much. In real life that would likely lead to emergency breaking, so fixing my algorithm to perform better when faced with shadows is crucial.
 
+Besides having to test the pipeline in more scenarios with shadows, I can imagine it to fail in different weather conditions, in more complex scenarios (like in a city).
