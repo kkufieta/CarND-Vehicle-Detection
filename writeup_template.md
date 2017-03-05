@@ -71,7 +71,7 @@ Here is are a few examples using the `HSV` color space and HOG parameters of `or
 
 I tried various combinations of parameters. 
 
-First, I performed a grid search on the parameters: All color spaces, pixels per cells = 4, 8 and 16, blocks per cell = 1 and 2, orientations = 9 and 12. I trained classifiers with 500 data samples based on all those combinations, and received tables with test accuracies. Let's show them off, since I've done the work (not that it proved useful, which is why I deleted it from my code as well. The code is available in older commits.) 
+First, I performed a grid search on the parameters: All color spaces, pixels per cells = 4, 8 and 16, blocks per cell = 1 and 2, orientations = 9 and 12. I trained classifiers with 500 data samples based on all those combinations, and received tables with test accuracies. Let's show them off, since I've done the work (not that it proved useful, which is why I deleted it from my code as well. The code is available in older commits.) Note: The values within the table divided by a slash, are for 1 and 2 cells/block, respectivel. The lowest table shows the number of features for each parameter combination.
 
 | RGB | 9           | 12          |
 | --- |:-----------:| -----------:|
@@ -109,28 +109,54 @@ First, I performed a grid search on the parameters: All color spaces, pixels per
 | 8               | 5292 / 10800  | 7056 / 14400  |
 | 16              | 972 / 432     | 1296 / 576    |
 
-As I've showed above, I examined color spaces and other parameteres manually and looked at the HOG plot. I then decided to choose a parameter and color space combination that would help me, a human, to distinguish between cars and non-cars. 
+Based on my research, I decided to give HSV a try. Based on the images I plotted above, I decided that as a human I could distinguish cars with the HSV channel, and I found that both 4 and 8 pixels/cell would be useful to do so.
+
+I worked for 50 hours (not a joke) with various combinations, of which the one with best performance was:
+
+* H-channel: 4 pixels/cells, 1 cell/block, 9 orientations
+* S-channel: 4 pixels/cells, 1 cell/block, 9 orientations
+* S-channel: 8 pixels/cells, 1 cell/block, 9 orientations
+* V-channel: 8 pixels/cells, 1 cell/block, 9 orientations
+
+This was performing quite alright, but not good enough. I was about to quit, when my friend told me about his particularly well performing parameter combination, which I gave a try:
+
+* All YUV channels, orient: 7, pixels/cell: 8, cells/block: 2
+
+It didn't do magic. Not knowing what else to try, I finally added binned color features and color histograms. That did the trick! The cars were finally almost perfectly recognized, but so were the shadows on the streets. After a little bit of research, I found in the (hog documentation)[http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.hog] that I could switch on `transform_sqrt` to avoid detecting shadows. I quickly realized that wouldn't work with YUV, since I get negative values in the Y channel, so I switched to this parameter set:
+
+* All YCrCb channels, orient: 7, pixels/cell: 8, cells/block: 2
+* binned color features and color histograms, spatial_size=(32, 32), hist_bins=32
+* `transform_sqrt=True`
+
+I actually tried HSV before YCrCb, but that made the performance really bad. Then I realized that YUV and YCrCb look quite similar, and the latter finally did the trick! The power law compression (`transform_sqrt`) worked very well to avoid detecting shadows and railings.
+
+Lesson learned: Computer vision is like gold digging to find the magic parameters that solve all your problems.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+First, I split my data into training and validation data. I did that before shuffling them, so I could have data samples that are different for training and testing. If I would have shuffled before splitting, I would have had very similar images in both training and testing set, and validation accuracy would show a 98-99% accuracy, which is not correct.
+
+I trained my classifier with a penalty parameter of `C=3e-6` to avoid overfitting. 
 
 ###Sliding Window Search
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+I used the sliding window approach with HOG-subsampling from Udacity. It is much faster than a simple sliding window approach, reduces video processing from 10 hours to 1 hour (for the 50 second project video). The sliding window approach reads in the area of the image that needs to be processed, and runs the HOG algorithm on it. Afterwards, it samples the image by moving the window over it, extracting the respective indices to get the corresponding HOG values. Additionaly, it runs the binned color features and the color histogram on each window, combines all features and uses the classifier to predict whether there is a car within the current window, or not.
 
 ![alt text][image3]
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+First I trained lots of classifiers with really bad and not so bad (but still not good enough) performance. One example would be:
+![alt text][image_bad1]
+
+That was the case for 50 hours, until I found my magic parameter combination as explained above. I trained my classifier with a penalty parameter of `C=3e-6` to avoid overfitting. I knew my parameter combination was working once I saw those beautiful pictures:
 
 ![alt text][image4a]
 ![alt text][image4b]
 
-![alt text][image_bad1]
+
 ---
 
 ### Video Implementation
