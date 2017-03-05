@@ -125,6 +125,38 @@ def extract_features(img_files, cspace='RGB', orient=9,
     # Return list of feature vectors
     return features
 
+def add_heat(heatmap, bbox_list):
+    # Iterate through list of bboxes
+    for box in bbox_list:
+        # Add += 1 for all pixels inside each bbox
+        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
+        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
+
+    # Return updated heatmap
+    return heatmap# Iterate through list of bboxes
+    
+def apply_threshold(heatmap, threshold):
+    # Zero out pixels below the threshold
+    heatmap[heatmap <= threshold] = 0
+    # Return thresholded map
+    return heatmap
+
+def draw_labeled_bboxes(img, labels):
+    # Iterate through all detected cars
+    for car_number in range(1, labels[1]+1):
+        # Find pixels with each car_number label value
+        nonzero = (labels[0] == car_number).nonzero()
+        # Identify x and y values of those pixels
+        nonzeroy = np.array(nonzero[0])
+        nonzerox = np.array(nonzero[1])
+        # Define a bounding box based on min/max x and y
+        bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+        # Draw the box on the image
+        cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
+    # Return the image
+    return img
+
+
 
 # ### Alternatively, load the saved models
 
@@ -312,7 +344,7 @@ def pipeline(img, classifier, X_scaler, heatmap_threshold=2, draw_images=False):
         plt.title('All scales combined')
         plt.show()
 
-    heat = np.zeros_like(heat_image[:,:,0]).astype(np.float)
+    heat = np.zeros_like(img[:,:,0]).astype(np.float)
 
     # Add heat to each box in box list
     heat = add_heat(heat,box_list)
@@ -396,7 +428,7 @@ heat_list = []
 heat_sum = np.zeros((720, 1280)).astype(np.float64)
 
 # clip = VideoFileClip('test_video.mp4').subclip(0,1)
-clip = VideoFileClip('project_video.mp4')
+clip = VideoFileClip('project_video.mp4').subclip(30,31)
 processed_vid = clip.fl_image(car_finding)
-get_ipython().magic("time processed_vid.write_videofile('processed_video.mp4', audio=False)")
+processed_vid.write_videofile('processed_video.mp4', audio=False)
 
