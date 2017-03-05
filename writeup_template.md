@@ -15,14 +15,25 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+[image1a]: ./examples/car_not_car.png
+[image1b]: ./examples/example_hist.png
+[image1c]: ./examples/example_hog_spatial.png
+[image2a]: ./examples/03_orient_9_pixpcell_4_cellpblock_2.png
+[image2b]: ./examples/03_orient_9_pixpcell_8_cellpblock_2.png
+[image3]: ./examples/sliding_windows.png
+[image4a]: ./examples/sliding_window.png
+[image4b]: ./examples/all_scales_combined.png
+[image_bad1]: ./examples/bad_performance.png
+[image5a]: ./examples/bboxes_and_heat_01.png
+[image5b]: ./examples/bboxes_and_heat_02.png
+[image5c]: ./examples/bboxes_and_heat_03.png
+[image5d]: ./examples/bboxes_and_heat_04.png
+[image5e]: ./examples/bboxes_and_heat_05.png
+[image5f]: ./examples/bboxes_and_heat_06.png
+[image6]: ./examples/all_scales_combined.png
+[image7]: ./examples/11_with_heat.png
+[video1]: ./processed_video.mp4
+[video_link]: https://www.youtube.com/watch?v=Nj_qJD7Rbec
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
 ###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -30,7 +41,7 @@ The goals / steps of this project are the following:
 ---
 ###Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf. 
 
 You're reading it!
 
@@ -42,14 +53,17 @@ The code for this step is contained in the first code cell of the IPython notebo
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
-![alt text][image1]
+![alt text][image1a]
+![alt text][image1b]
+![alt text][image1b]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
 
-![alt text][image2]
+![alt text][image2a]
+![alt text][image2b]
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
@@ -71,13 +85,17 @@ I decided to search random window positions at random scales all over the image 
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
-![alt text][image4]
+![alt text][image4a]
+![alt text][image4b]
+
+![alt text][image_bad1]
 ---
 
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result][video1]
+or [youtube][video_link]
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
@@ -88,7 +106,12 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ### Here are six frames and their corresponding heatmaps:
 
-![alt text][image5]
+![alt text][image5a]
+![alt text][image5b]
+![alt text][image5c]
+![alt text][image5d]
+![alt text][image5e]
+![alt text][image5f]
 
 ### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
 ![alt text][image6]
