@@ -1,9 +1,4 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
-**Vehicle Detection Project**
+## Vehicle Detection Project
 
 The goals / steps of this project are the following:
 
@@ -55,27 +50,16 @@ I started by reading in all the `vehicle` and `non-vehicle` images (Lines 50-80)
 
 ![alt text][image1a]
 
-Next, I implemented functions to extract HOG features, binned color features and color histograms (Lines 98-142). I plotted a few examples simply using the original image (or grey image in the case of HOG features):
+Next, I implemented functions to extract HOG features, binned color features and color histograms (Lines 98-142). I plotted a few examples simply using the original image (or grey image in the case of HOG features, Lines 144-237):
 
 ![alt text][image1b]
 ![alt text][image1c]
 
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
-
-Here is are a few examples using the `HSV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(4, 4)` and `pixels_per_cell=(8, 8)`, and `cells_per_block=(2, 2)`:
-
-`pixels_per_cell=(4,4)`:
-![alt text][image2a]
-`pixels_per_cell=(8,8)`:
-![alt text][image2b]
-
-You can see how much more detailed the HOG features look when using `pixels_per_cell=(4,4)` instead of `pixels_per_cell=(8,8)`. I felt that `(4,4)` would lead to a better performance (later I learned that's not necessarily the case, and it takes much longer to train and test).
+After that, I defined the `extract_features` function that extracts all the features for an image (Lines247-313).
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters. 
-
-First, I performed a grid search on the parameters: 
+I tried various combinations of parameters. First I performed a grid search on the parameters: 
 * All color spaces
 * pixels per cells = 4, 8 and 16
 * blocks per cell = 1 and 2
@@ -121,7 +105,18 @@ Note: The values within the table divided by a backslash, are for 1 and 2 cells/
 | 8               | 5292 / 10800  | 7056 / 14400  |
 | 16              | 972 / 432     | 1296 / 576    |
 
-The results look all almost about the same. But I decided to choose what looks best, and based on experience it is smart to choose the least number of parameters to avoid much too long processing and training times.
+The results look all almost about the same, the factor that varies most is how big the feature vector turns out. Somehow this convinced me that HSV doesn't look bad, so I settled on trying that.
+
+Next, I explored different color spaces and how their HOG features look like (that didn't work out to be useful either, so I deleted it from my code, but it is in my commit history). I found HSV looked good, so I explored that more.
+
+Here are a few examples using the `HSV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(4, 4)` and `pixels_per_cell=(8, 8)`, and `cells_per_block=(2, 2)`:
+
+`pixels_per_cell=(4,4)`:
+![alt text][image2a]
+`pixels_per_cell=(8,8)`:
+![alt text][image2b]
+
+You can see how much more detailed the HOG features look when using `pixels_per_cell=(4,4)` instead of `pixels_per_cell=(8,8)`. I felt that `(4,4)` would lead to a better performance (later I learned that's not necessarily the case, and it takes much longer to train and test).
 
 Based on the images I plotted above and the values I received from my grid search, I decided that as a human I could distinguish cars with the HSV channel, and I found that both 4 and 8 pixels/cell would be useful to do so. I expected the classifier to do the same.
 
