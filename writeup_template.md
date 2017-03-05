@@ -58,20 +58,32 @@ I started by reading in all the `vehicle` and `non-vehicle` images (Lines 50-80)
 Next, I implemented functions to extract HOG features, binned color features and color histograms (Lines 98-142). I plotted a few examples simply using the original image (or grey image in the case of HOG features):
 
 ![alt text][image1b]
-![alt text][image1b]
+![alt text][image1c]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is are a few examples using the `HSV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(4, 4)` and `pixels_per_cell=(8, 8)`, and `cells_per_block=(2, 2)`:
 
+`pixels_per_cell=(4,4)`:
 ![alt text][image2a]
+`pixels_per_cell=(8,8)`:
 ![alt text][image2b]
+
+You can see how much more detailed the HOG features look when using `pixels_per_cell=(4,4)` instead of `pixels_per_cell=(8,8)`. I felt that `(4,4)` would lead to a better performance (later I learned that's not necessarily the case, and it takes much longer to train and test).
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
 I tried various combinations of parameters. 
 
-First, I performed a grid search on the parameters: All color spaces, pixels per cells = 4, 8 and 16, blocks per cell = 1 and 2, orientations = 9 and 12. I trained classifiers with 500 data samples based on all those combinations, and received tables with test accuracies. Let's show them off, since I've done the work (not that it proved useful, which is why I deleted it from my code as well. The code is available in older commits.) Note: The values within the table divided by a slash, are for 1 and 2 cells/block, respectivel. The lowest table shows the number of features for each parameter combination.
+First, I performed a grid search on the parameters: 
+* All color spaces
+* pixels per cells = 4, 8 and 16
+* blocks per cell = 1 and 2
+* orientations = 9 and 12. 
+
+I trained classifiers with 500 data samples and tested them with 100 data samples, based on all those combinations, and received tables with test accuracies. Let's show them off, since I've done the work (not that it proved useful, which is why I deleted it from my code as well. The code is available in older commits.) 
+
+Note: The values within the table divided by a backslash, are for 1 and 2 cells/block, respectively. The last table shows the number of features for each parameter combination.
 
 | RGB | 9           | 12          |
 | --- |:-----------:| -----------:|
@@ -109,20 +121,25 @@ First, I performed a grid search on the parameters: All color spaces, pixels per
 | 8               | 5292 / 10800  | 7056 / 14400  |
 | 16              | 972 / 432     | 1296 / 576    |
 
-Based on my research, I decided to give HSV a try. Based on the images I plotted above, I decided that as a human I could distinguish cars with the HSV channel, and I found that both 4 and 8 pixels/cell would be useful to do so.
+The results look all almost about the same. But I decided to choose what looks best, and based on experience it is smart to choose the least number of parameters to avoid much too long processing and training times.
 
-I worked for 50 hours (not a joke) with various combinations, of which the one with best performance was:
+Based on the images I plotted above and the values I received from my grid search, I decided that as a human I could distinguish cars with the HSV channel, and I found that both 4 and 8 pixels/cell would be useful to do so. I expected the classifier to do the same.
+
+I worked for 50 hours (not a joke) with various combinations, one of which was this one:
 
 * H-channel: 4 pixels/cells, 1 cell/block, 9 orientations
 * S-channel: 4 pixels/cells, 1 cell/block, 9 orientations
 * S-channel: 8 pixels/cells, 1 cell/block, 9 orientations
 * V-channel: 8 pixels/cells, 1 cell/block, 9 orientations
 
-This was performing quite alright, but not good enough. I was about to quit, when my friend told me about his particularly well performing parameter combination, which I gave a try:
+This was performing quite alright, but not good enough to pass the project submission. I was about to quit, when my friend Kedar told me about his particularly well performing parameter combination, which I decided to give a try:
 
-* All YUV channels, orient: 7, pixels/cell: 8, cells/block: 2
+* All YUV channels
+* orient: 7
+* pixels/cell: 8
+* cells/block: 2
 
-It didn't do magic. Not knowing what else to try, I finally added binned color features and color histograms. That did the trick! The cars were finally almost perfectly recognized, but so were the shadows on the streets. After a little bit of research, I found in the (hog documentation)[http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.hog] that I could switch on `transform_sqrt` to avoid detecting shadows. I quickly realized that wouldn't work with YUV, since I get negative values in the Y channel, so I switched to this parameter set:
+It didn't do magic. Not knowing what else to try, I finally added binned color features and color histograms. That did the trick! The cars were finally almost perfectly classified, but so were the shadows on the streets. After a little bit of research, I found in the [hog documentation](http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.hog) that I could switch on `transform_sqrt` to avoid detecting shadows. I quickly realized that wouldn't work with YUV, since I get negative values in the Y channel, so I switched to this parameter set:
 
 * All YCrCb channels, orient: 7, pixels/cell: 8, cells/block: 2
 * binned color features and color histograms, spatial_size=(32, 32), hist_bins=32
@@ -130,7 +147,7 @@ It didn't do magic. Not knowing what else to try, I finally added binned color f
 
 I actually tried HSV before YCrCb, but that made the performance really bad. Then I realized that YUV and YCrCb look quite similar, and the latter finally did the trick! The power law compression (`transform_sqrt`) worked very well to avoid detecting shadows and railings.
 
-Lesson learned: Computer vision is like gold digging to find the magic parameters that solve all your problems.
+Lessons learned: My grid search and initial choice of parameters was useless. Computer vision is like gold digging to find the magic parameters that solve all your problems.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
@@ -142,16 +159,31 @@ I trained my classifier with a penalty parameter of `C=3e-6` to avoid overfittin
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I used the sliding window approach with HOG-subsampling from Udacity. It is much faster than a simple sliding window approach, reduces video processing from 10 hours to 1 hour (for the 50 second project video). The sliding window approach reads in the area of the image that needs to be processed, and runs the HOG algorithm on it. Afterwards, it samples the image by moving the window over it, extracting the respective indices to get the corresponding HOG values. Additionaly, it runs the binned color features and the color histogram on each window, combines all features and uses the classifier to predict whether there is a car within the current window, or not.
+I used the sliding window approach with HOG-subsampling from Udacity. It is much faster than a simple sliding window approach, reduces video processing from 10 hours to 1 hour (for the 50 second project video). 
+
+The sliding window approach reads in the area of the image that needs to be processed, and runs the HOG algorithm on it, saving HOG features for the entire image. Afterwards, it samples the image by moving the sliding window over it, extracting the respective indices to get the corresponding HOG values. Additionaly, it runs the binned color features and the color histogram on each window, combines all features and uses the classifier to predict whether there is a car within the current window, or not. Once classified, it moves the window by a number of pixels defined in `cells_per_step`, and repeats the process.
+
+This sliding window approach does allow to look for cars in windows with various sizes. This can be specified by the `scale`. It scales the image. The sliding window size remains the same size, so when the image is scaled to appear bigger, we're effectively scanning a smaller portion of the image at a time (smaller windows). When the image is scaled to be smaller, we're effectively scanning a larger portion of the image at a time (larger windows).
+
+Through extensive testing found that overlapping the windows by at least 75% gives good result. Also window sizes of 150, 130, 100, 75 and 50 pixels give quite good results and cover cars close by as well as cars further away. This led me to choose the following window sizes:
+
+* scale=2.3, cells_per_step=1
+* scale=1.9, cells_per_step=1
+* scale=1.4, cells_per_step=2
+* scale=1, cells_per_step=2
+
+I chose to search the image between roughly `400` to `650` in y-direction, and in the entire x-direction span. That way I could focus on the street only, and avoid getting false positives in the sky and trees. No need to scan the hood of the car, either.
+
+This image shows what my sliding window algorithm covers in an image:
 
 ![alt text][image3]
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-First I trained lots of classifiers with really bad and not so bad (but still not good enough) performance. One example would be:
+First I trained lots of classifiers with really bad and not so bad (but still not good enough) performance. One example would be my custom HSV parameter set that I've described above, which leads to these results:
 ![alt text][image_bad1]
 
-That was the case for 50 hours, until I found my magic parameter combination as explained above. I trained my classifier with a penalty parameter of `C=3e-6` to avoid overfitting. I knew my parameter combination was working once I saw those beautiful pictures:
+I was trying hard to get good results for 50 hours, until I found my magic parameter combination as explained above. I trained my classifier with a penalty parameter of `C=3e-6` to avoid overfitting. I knew my parameter combination was working once I saw those beautiful pictures that resembled the performance from the lecture quizzes:
 
 ![alt text][image4a]
 ![alt text][image4b]
@@ -162,17 +194,20 @@ That was the case for 50 hours, until I found my magic parameter combination as 
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result][video1]
-or [youtube][video_link]
+Here's a [link to my video result][video1] or you can view it directly on [youtube][video_link].
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+As I was scanning all images for car detections, I made a list of all the boxes that had a positive result. From all those boxes, I created a heatmap, and thresholded it with a value of 2, which means that at least 2 boxes had to overlap for them to be a positive finding. 
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+I returned the thresholded heatmap for each image in the video and kept a record of heatmaps from the past 12 frames. In order to do that efficiently, I kept a rolling list of 12 heatmaps, and a sum of the past 12 heatmaps, that I used for car detection. I updated both the list and the sum with every new frame.
 
-### Here are six frames and their corresponding heatmaps:
+I thresholded the heatmap sum with 12, which filtered out sporadic false positives, and kept the more reliable position detection of cars within the video. I constructed bounding boxes to cover the area of each blob detected.
+
+### Here are the six test images and their corresponding heatmaps:
+
+For every example, you can see all the detected windows (the blue boxes), the final heatmap for the frame, and the resulting bounding boxes for the current frame.
 
 ![alt text][image5a]
 ![alt text][image5b]
@@ -181,19 +216,19 @@ Here's an example result showing the heatmap from a series of frames of video, t
 ![alt text][image5e]
 ![alt text][image5f]
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
-
 ---
 
 ###Discussion
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+I failed to find the correct parameters with my grid search and way of thinking. I should have worked with the code given from Udacity, and should have only made marginal changes to the parameters we were shown. That way I would have received much faster and better results. 
+
+But that's not how it works in real life anyway, so I learned that the results in Computer Vision are highly dependent on the setup you choose, which is disheartening. There might be ways to understand the material better and make smarter choices (who know HSV would bring me to nowhere when it was so useful in Advanced Lane Finding? I want that person to be my mentor.) I hope to learn more, and become better at being a human optimizer.
+
+Next, I might get better results if I would tweak my parameters more, and would do more test runs. But after close to 60 hours of working on this project, I'm postponing that to the future. I believe a different choice of heatmap thresholds or window sizes might lead to even better results.
+
+Testing my algorithm on the project video revealed two flaws:
+* Cars appearing on the side are detected rather late. I might be able to fix that by augmenting my dataset and e.g. shifting the image so it learns to classify cars not only when they're fully in the picture, but also when only half the car is in the image.
+* Even though my algorithm barely reacts to shadows, there was a moment when it did so and extend the bounding box for the black car. In real life that would likely lead to emergency breaking, so fixing my algorithm to perform better would be crucial.
 
