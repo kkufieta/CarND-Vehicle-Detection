@@ -38,6 +38,8 @@ The goals / steps of this project are the following:
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
 ###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
+Note: I wrote my code originally in [a jupyter notebook file](https://github.com/kkufieta/CarND-Vehicle-Detection/blob/master/vehicle_detection.ipynb). All code lines I refer to from now on are found in the extracted [python file](https://github.com/kkufieta/CarND-Vehicle-Detection/blob/master/vehicle_detection.py).
+
 ---
 ###Writeup / README
 
@@ -49,25 +51,65 @@ You're reading it!
 
 ####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
-
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+I started by reading in all the `vehicle` and `non-vehicle` images (Lines 50-80).  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1a]
+
+Next, I implemented functions to extract HOG features, binned color features and color histograms (Lines 98-142). I plotted a few examples simply using the original image (or grey image in the case of HOG features):
+
 ![alt text][image1b]
 ![alt text][image1b]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
-
+Here is are a few examples using the `HSV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(4, 4)` and `pixels_per_cell=(8, 8)`, and `cells_per_block=(2, 2)`:
 
 ![alt text][image2a]
 ![alt text][image2b]
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters and...
+I tried various combinations of parameters. 
+
+First, I performed a grid search on the parameters: All color spaces, pixels per cells = 4, 8 and 16, blocks per cell = 1 and 2, orientations = 9 and 12. I trained classifiers with 500 data samples based on all those combinations, and received tables with test accuracies. Let's show them off, since I've done the work (not that it proved useful, which is why I deleted it from my code as well. The code is available in older commits.) 
+
+| RGB | 9           | 12          |
+| --- |:-----------:| -----------:|
+| 4   | 0.97 / 0.97 | 0.95 / 0.95 |
+| 8   | 0.96 / 0.95 | 0.95 / 0.95 |
+| 16  | 0.95 / 0.91 | 0.94 / 0.89 |
+
+| HSV | 9           | 12          |
+| --- |:-----------:| -----------:|
+| 4   | 0.97 / 0.94 | 0.94 / 0.92 |
+| 8   | 0.95 / 0.91 | 0.95 / 0.92 |
+| 16  | 0.94 / 0.87 | 0.93 / 0.89 |
+
+| LUV | 9           | 12          |
+| --- |:-----------:| -----------:|
+| 4   | 0.94 / 0.94 | 0.93 / 0.93 |
+| 8   | 0.95 / 0.96 | 0.94 / 0.94 |
+| 16  | 0.94 / 0.91 | 0.94 / 0.90 |
+
+| YUV | 9           | 12          |
+| --- |:-----------:| -----------:|
+| 4   | 0.96 / 0.96 | 0.94 / 0.93 |
+| 8   | 0.95 / 0.96 | 0.95 / 0.92 |
+| 16  | 0.96 / 0.91 | 0.93 / 0.91 |
+
+| YCrCb | 9           | 12          |
+| ----- |:-----------:| -----------:|
+| 4     | 0.95 / 0.96 | 0.93 / 0.92 |
+| 8     | 0.94 / 0.95 | 0.91 / 0.93 |
+| 16    | 0.96 / 0.91 | 0.93 / 0.91 |
+
+| number features | 9             | 12            |
+| --------------- |:-------------:| -------------:|
+| 4               | 24300 / 73008 | 32400 / 97344 |
+| 8               | 5292 / 10800  | 7056 / 14400  |
+| 16              | 972 / 432     | 1296 / 576    |
+
+As I've showed above, I examined color spaces and other parameteres manually and looked at the HOG plot. I then decided to choose a parameter and color space combination that would help me, a human, to distinguish between cars and non-cars. 
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
