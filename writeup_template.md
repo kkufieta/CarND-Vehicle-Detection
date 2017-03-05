@@ -55,7 +55,7 @@ Next, I implemented functions to extract HOG features (`get_hog_features`), binn
 ![alt text][image1b]
 ![alt text][image1c]
 
-After that, I defined the `extract_features` function that extracts all the features for an image (Lines 247-313).
+After that, I defined the `extract_features` function that extracts all the features for an image (Lines 247-313). I extracted HOG features from the training images on Lines 359-383.
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
