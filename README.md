@@ -41,7 +41,7 @@ The steps to detect vehicles in a video are the following:
 Note: I wrote my code originally in [a jupyter notebook file](https://github.com/kkufieta/CarND-Vehicle-Detection/blob/master/vehicle_detection.ipynb). All code lines I refer to from now on are found in the extracted [python file](https://github.com/kkufieta/CarND-Vehicle-Detection/blob/master/vehicle_detection.py).
 
 ---
-###Histogram of Oriented Gradients (HOG)
+### Histogram of Oriented Gradients (HOG)
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
